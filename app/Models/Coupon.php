@@ -13,6 +13,6 @@ class Coupon extends Model
         'discount_amount',
         'start_at',
         'expire_at',
-        'status'
+        'status',
     ];
 }

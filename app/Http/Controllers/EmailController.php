@@ -8,13 +8,15 @@ use Illuminate\Support\Facades\Mail;
 
 class EmailController extends Controller
 {
-    public function sendEmail() {
+    public function sendEmail()
+    {
         $toEmail = "dishakotak29@gmail.com";
         $message = "hello";
         $subject = "welcome to email";
 
-        $request = Mail::to($toEmail)->send(new welcomeemail($message, $subject));
+        $response = Mail::to($toEmail)
+            ->send(new welcomeemail($message, $subject));
 
-        dd($request);
+        dd($response);
     }
 }

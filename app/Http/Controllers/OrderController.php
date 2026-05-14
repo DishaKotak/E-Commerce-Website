@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Middleware\AuthCustom;
 use App\Models\Address;
-use Illuminate\Support\Facades\DB;
 use App\Models\Coupon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class OrderController extends Controller
@@ -20,17 +19,19 @@ class OrderController extends Controller
         $userId = session('auth_session.user_id');
 
         if (Auth::check()) {
-            $cart = \App\Models\Cart::where('user_id', session('auth_session.user_id'))->get();
 
+            $cart = \App\Models\Cart::where('user_id', $userId)->get();
             $addresses = Address::where('user_id', $userId)->get();
+
         } else {
+
             $cart = session()->get('cart');
         }
 
         if (!$cart || count($cart) == 0) {
-            return redirect()->route('cart.view')->with('error', 'Cart is empty');
-
-            return view('frontend.checkout', compact('cart', 'addresses'));
+            return redirect()
+                ->route('cart.view')
+                ->with('error', 'Cart is empty');
         }
 
         return view('frontend.checkout', compact('cart', 'addresses'));
@@ -39,35 +40,41 @@ class OrderController extends Controller
     public function placeOrder(Request $request)
     {
         $request->validate([
-            'phone_no'         => 'required',
-            'shipping_address_id' => 'required|exists:addresses,id',
-            'billing_address_id' => 'required|exists:addresses,id',
+            'phone_no'             => 'required',
+            'shipping_address_id'  => 'required|exists:addresses,id',
+            'billing_address_id'   => 'required|exists:addresses,id',
         ]);
 
-        // ✅ One time define use every time
         $userId = session('auth_session.user_id');
 
-        // ─── Step 1: Cart fetch ────────────────────────────────
+        // ───── Cart fetch ─────
         if (Auth::check()) {
+
             $cartItems = \App\Models\Cart::where('user_id', $userId)->get();
+
             $cart = [];
+
             foreach ($cartItems as $item) {
                 $cart[$item->product_id] = [
                     'quantity' => $item->qty,
                     'price'    => $item->price
                 ];
             }
+
         } else {
+
             $cart = session()->get('cart', []);
         }
 
+        // ───── Total ─────
         $total = 0;
+
         foreach ($cart as $item) {
             $total += $item['price'] * $item['quantity'];
         }
 
-        // ─── Step 2: Coupon validate First ────────────────────
-        $discount   = 0;
+        // ───── Coupon ─────
+        $discount = 0;
         $couponData = null;
 
         if (session()->has('coupon')) {
@@ -89,26 +96,25 @@ class OrderController extends Controller
 
         $finalTotal = $total - $discount;
 
-        // ─── Step 3: Order create ──────────────────────────────
+        // ───── Order create ─────
         $order = Order::create([
-            'order_date'       => Carbon::now(),
-            'user_id'          => $userId,
-            'total_amount'     => $total,
-            'discount'         => $discount,
-            'final_amount'     => $finalTotal,
-            'shipping_address' => 'N/A',
-            'billing_address'  => 'N/A',
+            'order_date'          => Carbon::now(),
+            'user_id'             => $userId,
+            'total_amount'        => $total,
+            'discount'            => $discount,
+            'final_amount'        => $finalTotal,
+            'shipping_address'    => 'N/A',
+            'billing_address'     => 'N/A',
             'shipping_address_id' => $request->shipping_address_id,
-            'billing_address_id' => $request->billing_address_id,
-            'phone_no'         => $request->phone_no,
-            'status'           => 'pending',
-            'tracking_id'      => 'ORD' . strtoupper(uniqid())
+            'billing_address_id'  => $request->billing_address_id,
+            'phone_no'            => $request->phone_no,
+            'status'              => 'pending',
+            'tracking_id'         => 'ORD' . strtoupper(uniqid())
         ]);
 
-        $trackingId = $order->tracking_id;
-
-        // ─── Step 4: Order items ───────────────────────────────
+        // ───── Order items ─────
         foreach ($cart as $product_id => $item) {
+
             OrderItem::create([
                 'order_id'   => $order->id,
                 'product_id' => $product_id,
@@ -118,14 +124,14 @@ class OrderController extends Controller
             ]);
         }
 
-        // ─── Step 5: Cart clear ────────────────────────────────
+        // ───── Clear cart ─────
         if (Auth::check()) {
             \App\Models\Cart::where('user_id', $userId)->delete();
         } else {
             session()->forget('cart');
         }
 
-        // ─── Step 6: Coupon save ───────────────────────────────
+        // ───── Coupon usage save ─────
         if ($couponData) {
 
             DB::table('coupon_usages')->insert([
@@ -135,7 +141,8 @@ class OrderController extends Controller
                 'updated_at' => now(),
             ]);
 
-            Coupon::where('id', session('coupon.id'))->increment('used_count');
+            Coupon::where('id', $couponData['id'])
+                ->increment('used_count');
 
             session()->forget('coupon');
         }
@@ -143,10 +150,9 @@ class OrderController extends Controller
         return "Order placed successfully!";
     }
 
-
     public function myOrders()
     {
-        $userId = session('auth_session')['user_id'];
+        $userId = session('auth_session.user_id');
 
         $orders = Order::with('items.product')
             ->where('user_id', $userId)
@@ -162,10 +168,7 @@ class OrderController extends Controller
         $order = Order::with(['shippingAddress', 'billingAddress'])
             ->findOrFail($id);
 
-        // $addresses = \App\Models\Address::all();
-
         $addresses = Address::where('user_id', $order->user_id)->get();
-
 
         return view('orderdetails', compact('order', 'addresses'));
     }
@@ -241,6 +244,7 @@ class OrderController extends Controller
         $item = OrderItem::findOrFail($id);
 
         if ($item->qty > 1) {
+
             $item->qty -= 1;
             $item->total = $item->qty * $item->price;
             $item->save();
@@ -254,7 +258,6 @@ class OrderController extends Controller
     public function deleteItem(int $id)
     {
         $item = OrderItem::findOrFail($id);
-
         $order = Order::findOrFail($item->order_id);
 
         $item->delete();
@@ -275,43 +278,41 @@ class OrderController extends Controller
         $total = OrderItem::where('order_id', $orderId)->sum('total');
 
         $order->total_amount = $total;
-
         $order->save();
     }
 
-public function show(int $id)
-{
-    //  Order + Address (left join)
-    $order = DB::table('order')
-        ->leftJoin('addresses', 'order.shipping_address_id', '=', 'addresses.id')
-        ->select([
-            'order.*',
-            'addresses.full_name',
-            'addresses.address_line1 as user_address',
-            'addresses.phone as phone'
-        ])
-        ->where('order.id', $id)
-        ->first();
+    public function show(int $id)
+    {
+        $order = DB::table('order')
+            ->leftJoin('addresses', 'order.shipping_address_id', '=', 'addresses.id')
+            ->select([
+                'order.*',
+                'addresses.full_name',
+                'addresses.address_line1 as user_address',
+                'addresses.phone as phone'
+            ])
+            ->where('order.id', $id)
+            ->first();
 
-    //  Order Items + Product (separate query)
-    $items = DB::table('order_items')
-        ->join('products', 'order_items.product_id', '=', 'products.id')
-        ->where('order_items.order_id', $id)
-        ->select([
-            'order_items.*',
-            'products.name as product_name',
-        ])
-        ->get();
+        $items = DB::table('order_items')
+            ->join('products', 'order_items.product_id', '=', 'products.id')
+            ->where('order_items.order_id', $id)
+            ->select([
+                'order_items.*',
+                'products.name as product_name',
+            ])
+            ->get();
 
-    return view('frontend.order-detailsuser', compact('order', 'items'));
-}
+        return view('frontend.order-detailsuser', compact('order', 'items'));
+    }
 
-public function downloadInvoice(int $id)
-{
-    $order = Order::with(['items.product', 'address'])->findOrFail($id);
+    public function downloadInvoice(int $id)
+    {
+        $order = Order::with(['items.product', 'address'])
+            ->findOrFail($id);
 
-    $pdf = Pdf::loadView('frontend.invoice', compact('order'));
+        $pdf = Pdf::loadView('frontend.invoice', compact('order'));
 
-    return $pdf->download('invoice_'.$order->id.'.pdf');
-}
+        return $pdf->download('invoice_' . $order->id . '.pdf');
+    }
 }

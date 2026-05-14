@@ -13,9 +13,9 @@ class SearchController extends Controller
         $query = $request->query('query');
 
         $products = Products::where('name', 'LIKE', "%$query%")
-                            ->orwhere('description', 'LIKE', "%$query%")
-                            ->get();
-                            
+            ->orWhere('description', 'LIKE', "%$query%")
+            ->get();
+
         return view('frontend.search', compact('products', 'query'));
     }
 }

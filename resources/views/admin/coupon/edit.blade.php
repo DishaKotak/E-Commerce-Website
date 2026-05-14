@@ -31,12 +31,15 @@
 </style>
 
 <div class="container mt-4">
+
     <div class="card">
+
         <div class="card-header d-flex justify-content-between">
             <h4>Edit Coupon Code</h4>
         </div>
 
         <div class="card-body">
+
             <form action="{{ url('admin/coupons/update/'.$coupon->id) }}" method="POST">
                 @csrf
 
@@ -60,8 +63,12 @@
                     <div class="col-md-6 mb-3">
                         <label>Type</label>
                         <select name="type" class="form-control">
-                            <option value="percent" {{ $coupon->type == 'percent' ? 'selected' : '' }}>Percent</option>
-                            <option value="fixed" {{ $coupon->type == 'fixed' ? 'selected' : '' }}>Fixed</option>
+                            <option value="percent" {{ $coupon->type == 'percent' ? 'selected' : '' }}>
+                                Percent
+                            </option>
+                            <option value="fixed" {{ $coupon->type == 'fixed' ? 'selected' : '' }}>
+                                Fixed
+                            </option>
                         </select>
                     </div>
 
@@ -90,22 +97,28 @@
                     <div class="col-md-6 mb-3">
                         <label>Status</label>
                         <select name="status" class="form-control">
-                            <option value="1" {{ $coupon->status == 1 ? 'selected' : '' }}>Active</option>
-                            <option value="0" {{ $coupon->status == 0 ? 'selected' : '' }}>Inactive</option>
+                            <option value="1" {{ $coupon->status == 1 ? 'selected' : '' }}>
+                                Active
+                            </option>
+                            <option value="0" {{ $coupon->status == 0 ? 'selected' : '' }}>
+                                Inactive
+                            </option>
                         </select>
                     </div>
 
                 </div>
 
-                <!-- Buttons -->
                 <div class="mt-3">
                     <button type="submit" class="btn btn-theme">Update</button>
                     <a href="{{ url('admin/coupons') }}" class="btn btn-theme">Cancel</a>
                 </div>
 
             </form>
+
         </div>
+
     </div>
+
 </div>
 
 @endsection

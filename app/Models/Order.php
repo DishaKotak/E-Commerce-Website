@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\User;
 use Illuminate\Support\Str;
+use App\Models\User;
+use App\Models\Address;
 
 class Order extends Model
 {
@@ -26,48 +27,38 @@ class Order extends Model
         'status',
         'discount',
         'final_amount',
-        ];
+    ];
 
-        public function items()
-        {
-        return $this->hasMany(OrderItem::class, 'order_id');
-        }
-
-        public function orderItems()
-        {
-        return $this->hasMany(\App\Models\OrderItem::class, 'order_id');
-        }
-
-        public function user()
-        {
-        return $this->belongsTo(User::class);
-        }
-
-        protected static function boot()
-        {
-            parent::boot();
-
-            static::creating(function ($order){
-                $order->tracking_id = 'TRK-' . strtoupper(Str::random(10));
-            });
-        }
-
-        protected $casts = [
+    protected $casts = [
         'order_date' => 'datetime',
-        ];
+    ];
 
-        public function shippingAddress()
-        {
-            return $this->belongsTo(Address::class, 'shipping_address_id');
-        }
+    public function items()
+    {
+        return $this->hasMany(\App\Models\OrderItem::class, 'order_id');
+    }
 
-        public function billingAddress()
-        {
-            return $this->belongsTo(Address::class, 'billing_address_id');
-        }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
-        // public function address()
-        // {
-        //     return $this->belongsTo(Address::class, 'shipping_address_id');
-        // }
+    public function shippingAddress()
+    {
+        return $this->belongsTo(Address::class, 'shipping_address_id');
+    }
+
+    public function billingAddress()
+    {
+        return $this->belongsTo(Address::class, 'billing_address_id');
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($order) {
+            $order->tracking_id = 'TRK-' . strtoupper(Str::random(10));
+        });
+    }
 }

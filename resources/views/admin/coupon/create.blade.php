@@ -4,30 +4,30 @@
 
 <style>
     ::placeholder {
-    color: white !important;
-    opacity: 1;
-}
+        color: white !important;
+        opacity: 1;
+    }
 
-.btn-theme {
-    background-color: #5B6B82;
-    color: white;
-}
+    .btn-theme {
+        background-color: #5B6B82;
+        color: white;
+    }
 
-select {
-    background-color: #5B6B82;
-    color: #fff;
-    border: none;
-}
+    select {
+        background-color: #5B6B82;
+        color: #fff;
+        border: none;
+    }
 
-select option {
-    color: #000;
-    background-color: #fff;
-}
+    select option {
+        color: #000;
+        background-color: #fff;
+    }
 
-.form-control {
-    width: 100%;
-    padding: 10px 12px;
-}
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+    }
 </style>
 
 @if(session('success'))
@@ -43,13 +43,17 @@ select option {
 @endif
 
 <div class="container mt-4">
+
     <div class="card">
+
         <div class="card-header d-flex justify-content-between">
             <h4>Create Coupon Code</h4>
+
             {{-- <a href="{{ url('admin/coupons') }}" class="btn btn-secondary btn-sm">Cancel</a> --}}
         </div>
 
         <div class="card-body">
+
             <form action="{{ url('admin/coupons/store') }}" method="POST">
                 @csrf
 
@@ -105,15 +109,17 @@ select option {
 
                 </div>
 
-                <!-- Buttons -->
                 <div class="mt-3">
                     <button type="submit" class="btn btn-theme">Create</button>
                     <a href="{{ url('admin/coupons') }}" class="btn btn-theme">Cancel</a>
                 </div>
 
             </form>
+
         </div>
+
     </div>
+
 </div>
 
 @endsection
